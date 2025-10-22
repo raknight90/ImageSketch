@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
@@ -17,13 +17,15 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(new Image());
   const [edgeThreshold, setEdgeThreshold] = useState<number>(50); // 0 to 255
+  const [isImageLoaded, setIsImageLoaded] = useState(false); // State to track if the image is loaded onto imageRef
 
-  // This function will be recreated on every render, capturing the latest edgeThreshold
-  const applyEdgeDetection = () => {
+  // Memoize the applyEdgeDetection function to prevent unnecessary re-creations
+  // It depends on edgeThreshold and onEdgeDetect, so it will update when they do.
+  const applyEdgeDetection = useCallback(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
+    // Ensure canvas, context, and image are ready before applying effect
     if (!canvas || !ctx || !imageRef.current.complete) {
-      // console.log("Skipping applyEdgeDetection: canvas, ctx, or image not ready.");
       return;
     }
 
@@ -76,8 +78,9 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
     }
     ctx.putImageData(outputImageData, 0, 0);
     onEdgeDetect(canvas.toDataURL("image/png"));
-  };
+  }, [edgeThreshold, onEdgeDetect]); // Dependencies for useCallback
 
+  // Effect 1: Handles loading the image into imageRef.current
   useEffect(() => {
     const currentImage = imageRef.current;
     const canvas = canvasRef.current;
@@ -88,44 +91,51 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
       return;
     }
 
-    const loadImageAndApplyEffect = () => {
-      if (imageUrl) {
-        // Only update src if it's a new image to avoid unnecessary reloads
-        if (currentImage.src !== imageUrl) {
-          currentImage.src = imageUrl;
-        }
-
-        // If image is already loaded, apply effect immediately
-        if (currentImage.complete) {
-          applyEdgeDetection();
-        } else {
-          // Otherwise, wait for it to load
-          currentImage.onload = () => {
-            applyEdgeDetection();
-          };
-          currentImage.onerror = () => {
-            console.error("Failed to load image for edge detection.");
-            onEdgeDetect("");
-          };
-        }
-      } else {
-        // No image URL, clear canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        onEdgeDetect("");
-      }
+    const handleImageLoad = () => {
+      setIsImageLoaded(true);
     };
 
-    loadImageAndApplyEffect();
+    const handleImageError = () => {
+      setIsImageLoaded(false);
+      console.error("Failed to load image for edge detection.");
+      onEdgeDetect("");
+    };
 
-    // Cleanup function
+    currentImage.onload = handleImageLoad;
+    currentImage.onerror = handleImageError;
+
+    if (imageUrl) {
+      if (currentImage.src !== imageUrl) {
+        setIsImageLoaded(false); // Reset loaded state for new image
+        currentImage.src = imageUrl; // Load new image
+      } else if (currentImage.complete) {
+        // If the image is already loaded (e.g., from cache), set state immediately
+        setIsImageLoaded(true);
+      }
+    } else {
+      // No image URL, clear canvas and reset state
+      setIsImageLoaded(false);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      onEdgeDetect("");
+    }
+
+    // Cleanup function for image event listeners
     return () => {
       currentImage.onload = null;
       currentImage.onerror = null;
     };
-  }, [imageUrl, edgeThreshold, onEdgeDetect]); // Depend on imageUrl and edgeThreshold
+  }, [imageUrl, onEdgeDetect]); // Only re-run if imageUrl or onEdgeDetect changes
+
+  // Effect 2: Applies edge detection when image is loaded or threshold changes
+  useEffect(() => {
+    if (isImageLoaded) {
+      applyEdgeDetection();
+    }
+  }, [isImageLoaded, applyEdgeDetection]); // Re-run when image loads or applyEdgeDetection (due to edgeThreshold) changes
 
   const handleReset = () => {
     setEdgeThreshold(50);
+    // applyEdgeDetection will be called via the second useEffect due to state change
   };
 
   if (!imageUrl) {
