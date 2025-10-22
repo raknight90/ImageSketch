@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
@@ -17,13 +17,17 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(new Image());
   const [edgeThreshold, setEdgeThreshold] = useState<number>(50); // 0 to 255
-  const [isImageLoaded, setIsImageLoaded] = useState(false); // New state to track image loading
+  const [isImageLoaded, setIsImageLoaded] = useState(false); // State to track image loading
 
-  const applyEdgeDetection = useCallback(() => {
+  // Define applyEdgeDetection as a regular function to always capture the latest state
+  const applyEdgeDetection = () => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     // Ensure canvas, context, and image are ready before applying effect
-    if (!canvas || !ctx || !imageRef.current.complete || !isImageLoaded) return;
+    if (!canvas || !ctx || !imageRef.current.complete) {
+      console.log("Skipping applyEdgeDetection: canvas, ctx, or image not ready.");
+      return;
+    }
 
     canvas.width = imageRef.current.naturalWidth;
     canvas.height = imageRef.current.naturalHeight;
@@ -74,7 +78,7 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
     }
     ctx.putImageData(outputImageData, 0, 0);
     onEdgeDetect(canvas.toDataURL("image/png"));
-  }, [edgeThreshold, isImageLoaded, onEdgeDetect]); // Dependencies for useCallback
+  };
 
   // Effect for loading the image and setting its loaded state
   useEffect(() => {
@@ -85,7 +89,9 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
     if (!ctx || !canvas) return;
 
     const handleImageLoad = () => {
-      setIsImageLoaded(true); // Mark image as loaded
+      setIsImageLoaded(true);
+      // Apply effect immediately after image loads
+      applyEdgeDetection();
     };
 
     const handleImageError = () => {
@@ -102,8 +108,9 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
         setIsImageLoaded(false); // Reset loaded state for new image
         currentImage.src = imageUrl; // Load new image
       } else if (currentImage.complete) {
-        // If the image is already loaded (e.g., from cache), set state immediately
+        // If the image is already loaded (e.g., from cache), set state immediately and apply effect
         setIsImageLoaded(true);
+        applyEdgeDetection();
       }
     } else {
       // No image URL, clear canvas and reset state
@@ -116,14 +123,14 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
       currentImage.onload = null; // Clean up event listeners
       currentImage.onerror = null;
     };
-  }, [imageUrl, onEdgeDetect]); // Dependencies for image loading
+  }, [imageUrl, onEdgeDetect, edgeThreshold]); // Include edgeThreshold as a dependency because applyEdgeDetection is called here
 
-  // Effect for applying edge detection when image is loaded or threshold changes
+  // Effect for applying edge detection when threshold changes, if image is loaded
   useEffect(() => {
-    if (isImageLoaded) {
+    if (isImageLoaded && imageUrl) {
       applyEdgeDetection();
     }
-  }, [isImageLoaded, applyEdgeDetection]); // This will trigger applyEdgeDetection when isImageLoaded changes or applyEdgeDetection (due to edgeThreshold) changes.
+  }, [edgeThreshold, isImageLoaded, imageUrl]); // Removed applyEdgeDetection from dependencies as it's a regular function
 
   const handleReset = () => {
     setEdgeThreshold(50);
