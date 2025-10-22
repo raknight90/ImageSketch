@@ -13,7 +13,7 @@ const Gallery = () => {
   const { galleryImages, deleteImage, clearGallery } = useImageGallery();
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-4 space-y-8 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
+    <div className="min-h-screen flex flex-col items-center p-4 space-y-8"> {/* Removed explicit bg/text classes */}
       <h1 className="text-4xl font-bold mb-4 text-center">Your Image Gallery</h1>
 
       <div className="flex space-x-4">

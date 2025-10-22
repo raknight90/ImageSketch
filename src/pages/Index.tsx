@@ -45,10 +45,10 @@ const Index = () => {
   const imageForSketcher = adjustedImage || croppedImage || originalImage;
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-4 space-y-8 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
+    <div className="min-h-screen flex flex-col items-center p-4 space-y-8"> {/* Removed explicit bg/text classes */}
       <div className="flex justify-between w-full max-w-6xl mb-4">
         <h1 className="text-4xl font-bold text-center flex-grow">Photo Sketcher App</h1>
-        <ThemeToggle /> {/* Add the ThemeToggle here */}
+        <ThemeToggle />
       </div>
 
       <Button asChild className="mb-4">
