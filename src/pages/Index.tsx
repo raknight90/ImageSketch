@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import ImageUpload from "@/components/ImageUpload";
 import ImageCropper from "@/components/ImageCropper";
 import ImageSketcher from "@/components/ImageSketcher";
+import ImageEdgeDetector from "@/components/ImageEdgeDetector"; // New import
 import ImageDisplayCard from "@/components/ImageDisplayCard";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Separator } from "@/components/ui/separator";
@@ -14,24 +15,33 @@ const Index = () => {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
   const [sketchedImage, setSketchedImage] = useState<string | null>(null);
+  const [edgeDetectedImage, setEdgeDetectedImage] = useState<string | null>(null); // New state
 
   const handleImageSelect = (imageUrl: string) => {
     setOriginalImage(imageUrl);
     setCroppedImage(null);
     setSketchedImage(null);
+    setEdgeDetectedImage(null); // Reset all subsequent effects
   };
 
   const handleCrop = (croppedImageUrl: string) => {
     setCroppedImage(croppedImageUrl);
     setSketchedImage(null);
+    setEdgeDetectedImage(null); // Reset subsequent effects
   };
 
   const handleSketch = (sketchedImageUrl: string) => {
     setSketchedImage(sketchedImageUrl);
+    setEdgeDetectedImage(null); // Reset subsequent effects
+  };
+
+  const handleEdgeDetect = (edgeDetectedImageUrl: string) => { // New handler
+    setEdgeDetectedImage(edgeDetectedImageUrl);
   };
 
   // Determine the source image for the next step in the pipeline
   const imageForSketcher = croppedImage || originalImage;
+  const imageForEdgeDetector = sketchedImage || croppedImage || originalImage; // Source for edge detector
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 space-y-8">
@@ -53,9 +63,13 @@ const Index = () => {
         {imageForSketcher && (
           <ImageSketcher imageUrl={imageForSketcher} onSketch={handleSketch} />
         )}
+
+        {imageForEdgeDetector && ( // Render Edge Detector if any image is available
+          <ImageEdgeDetector imageUrl={imageForEdgeDetector} onEdgeDetect={handleEdgeDetect} />
+        )}
       </div>
 
-      {(originalImage || croppedImage || sketchedImage) && (
+      {(originalImage || croppedImage || sketchedImage || edgeDetectedImage) && (
         <>
           <Separator className="w-full max-w-6xl my-8" />
           <h2 className="text-3xl font-bold text-center">Your Images</h2>
@@ -79,6 +93,13 @@ const Index = () => {
                 title="Sketched Image"
                 imageUrl={sketchedImage}
                 filename="sketched-image.png"
+              />
+            )}
+            {edgeDetectedImage && ( // Display card for edge-detected image
+              <ImageDisplayCard
+                title="Edge Detected Image"
+                imageUrl={edgeDetectedImage}
+                filename="edge-detected-image.png"
               />
             )}
           </div>
