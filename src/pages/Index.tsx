@@ -4,36 +4,25 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import ImageUpload from "@/components/ImageUpload";
 import ImageCropper from "@/components/ImageCropper";
-import ImageAdjuster from "@/components/ImageAdjuster";
 import ImageSketcher from "@/components/ImageSketcher";
 import ImageDisplayCard from "@/components/ImageDisplayCard";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-// ThemeToggle is no longer needed as the app will be dark theme only
-// import { ThemeToggle } from "@/components/theme-toggle"; 
 
 const Index = () => {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
-  const [adjustedImage, setAdjustedImage] = useState<string | null>(null);
   const [sketchedImage, setSketchedImage] = useState<string | null>(null);
 
   const handleImageSelect = (imageUrl: string) => {
     setOriginalImage(imageUrl);
     setCroppedImage(null);
-    setAdjustedImage(null);
     setSketchedImage(null);
   };
 
   const handleCrop = (croppedImageUrl: string) => {
     setCroppedImage(croppedImageUrl);
-    setAdjustedImage(null);
-    setSketchedImage(null);
-  };
-
-  const handleAdjust = (adjustedImageUrl: string) => {
-    setAdjustedImage(adjustedImageUrl);
     setSketchedImage(null);
   };
 
@@ -42,14 +31,12 @@ const Index = () => {
   };
 
   // Determine the source image for the next step in the pipeline
-  const imageForAdjuster = croppedImage || originalImage;
-  const imageForSketcher = adjustedImage || croppedImage || originalImage;
+  const imageForSketcher = croppedImage || originalImage;
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 space-y-8">
       <div className="flex justify-between w-full max-w-6xl mb-4">
         <h1 className="text-4xl font-bold text-center flex-grow">Photo Sketcher App</h1>
-        {/* ThemeToggle removed */}
       </div>
 
       <Button asChild className="mb-4">
@@ -63,16 +50,12 @@ const Index = () => {
           <ImageCropper imageUrl={originalImage} onCrop={handleCrop} />
         )}
 
-        {imageForAdjuster && (
-          <ImageAdjuster imageUrl={imageForAdjuster} onAdjust={handleAdjust} />
-        )}
-
         {imageForSketcher && (
           <ImageSketcher imageUrl={imageForSketcher} onSketch={handleSketch} />
         )}
       </div>
 
-      {(originalImage || croppedImage || adjustedImage || sketchedImage) && (
+      {(originalImage || croppedImage || sketchedImage) && (
         <>
           <Separator className="w-full max-w-6xl my-8" />
           <h2 className="text-3xl font-bold text-center">Your Images</h2>
@@ -89,13 +72,6 @@ const Index = () => {
                 title="Cropped Image"
                 imageUrl={croppedImage}
                 filename="cropped-image.png"
-              />
-            )}
-            {adjustedImage && (
-              <ImageDisplayCard
-                title="Adjusted Image"
-                imageUrl={adjustedImage}
-                filename="adjusted-image.png"
               />
             )}
             {sketchedImage && (
