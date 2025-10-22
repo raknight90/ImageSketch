@@ -17,8 +17,8 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(new Image());
   const [edgeThreshold, setEdgeThreshold] = useState<number>(50); // 0 to 255
-  const [currentOriginalImageData, setCurrentOriginalImageData] = useState<ImageData | null>(null); // Stores the raw pixel data for the *currently processed* image
-  const [currentImageSrc, setCurrentImageSrc] = useState<string | null>(null); // Tracks the imageUrl that corresponds to currentOriginalImageData
+  const [originalImageData, setOriginalImageData] = useState<ImageData | null>(null); // Stores the raw pixel data for the *currently processed* image
+  const [currentLoadedImageUrl, setCurrentLoadedImageUrl] = useState<string | null>(null); // Tracks the imageUrl that originalImageData corresponds to
 
   // Function to apply edge detection using Sobel operator
   const processImageData = useCallback((imageData: ImageData, threshold: number): ImageData => {
@@ -100,7 +100,7 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
     return outputImageData;
   }, []);
 
-  // Effect 1: Handles loading the image and updating currentOriginalImageData
+  // Effect 1: Handles loading the image and updating originalImageData
   useEffect(() => {
     const currentImageElement = imageRef.current;
     const canvas = canvasRef.current;
@@ -108,8 +108,8 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
 
     if (!ctx || !canvas) {
       onEdgeDetect("");
-      setCurrentOriginalImageData(null);
-      setCurrentImageSrc(null);
+      setOriginalImageData(null);
+      setCurrentLoadedImageUrl(null);
       return;
     }
 
@@ -117,16 +117,16 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
     if (!imageUrl) {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       onEdgeDetect("");
-      setCurrentOriginalImageData(null);
-      setCurrentImageSrc(null);
+      setOriginalImageData(null);
+      setCurrentLoadedImageUrl(null);
       return;
     }
 
-    // Only load a new image if the imageUrl has actually changed from what's currently processed
-    if (imageUrl !== currentImageSrc) {
-      // Reset image data and source, but don't clear canvas yet
-      setCurrentOriginalImageData(null);
-      setCurrentImageSrc(null); // Will be set once new image loads successfully
+    // Only load a new image if the imageUrl has actually changed from what's currently loaded
+    if (imageUrl !== currentLoadedImageUrl) {
+      // Set currentLoadedImageUrl to null temporarily to indicate loading
+      setCurrentLoadedImageUrl(null);
+      setOriginalImageData(null); // Clear originalImageData to indicate new image is coming
 
       currentImageElement.src = imageUrl;
 
@@ -137,8 +137,8 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
         if (!offscreenCtx) {
           console.error("Failed to get offscreen canvas context.");
           onEdgeDetect("");
-          setCurrentOriginalImageData(null);
-          setCurrentImageSrc(null);
+          setOriginalImageData(null);
+          setCurrentLoadedImageUrl(null);
           return;
         }
 
@@ -147,15 +147,22 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
         offscreenCtx.drawImage(currentImageElement, 0, 0);
         
         // Update the state with the new original image data and its source
-        setCurrentOriginalImageData(offscreenCtx.getImageData(0, 0, offscreenCanvas.width, offscreenCanvas.height));
-        setCurrentImageSrc(imageUrl);
+        setOriginalImageData(offscreenCtx.getImageData(0, 0, offscreenCanvas.width, offscreenCanvas.height));
+        setCurrentLoadedImageUrl(imageUrl); // Mark this URL as successfully loaded
+        
+        // Set the main canvas dimensions, but don't draw the original image here.
+        // The processed image will be drawn by Effect 2.
+        canvas.width = currentImageElement.naturalWidth;
+        canvas.height = currentImageElement.naturalHeight;
+        // Do NOT clear main canvas here. Let Effect 2 handle drawing.
+        // If originalImageData is null, Effect 2 will not draw, preserving previous state.
       };
 
       const handleImageError = () => {
         console.error("Failed to load image for edge detection.");
         onEdgeDetect("");
-        setCurrentOriginalImageData(null);
-        setCurrentImageSrc(null);
+        setOriginalImageData(null);
+        setCurrentLoadedImageUrl(null);
         ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear main canvas on error
       };
 
@@ -168,26 +175,27 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
         currentImageElement.onerror = null;
       };
     }
-  }, [imageUrl, onEdgeDetect, currentImageSrc]); // Depend on currentImageSrc to know if a new image needs loading
+  }, [imageUrl, onEdgeDetect, currentLoadedImageUrl]); // Depend on currentLoadedImageUrl to know if a new image needs loading
 
-  // Effect 2: Debounced application of edge detection when currentOriginalImageData is available or threshold changes
+  // Effect 2: Debounced application of edge detection when originalImageData is available or threshold changes
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
 
-    if (!currentOriginalImageData || !ctx || !canvas) {
-      // If no image data, ensure canvas is clear and output is empty
-      ctx?.clearRect(0, 0, canvas?.width || 0, canvas?.height || 0);
+    if (!originalImageData || !ctx || !canvas) {
+      // If no image data, do NOT clear the canvas.
+      // This preserves the previous state during loading of a new image.
+      // Only clear if imageUrl is explicitly empty (handled in Effect 1).
       onEdgeDetect("");
       return;
     }
 
     // Set canvas dimensions to match the image data
-    canvas.width = currentOriginalImageData.width;
-    canvas.height = currentOriginalImageData.height;
+    canvas.width = originalImageData.width;
+    canvas.height = originalImageData.height;
 
     const handler = setTimeout(() => {
-      const processedData = processImageData(currentOriginalImageData, edgeThreshold);
+      const processedData = processImageData(originalImageData, edgeThreshold);
       ctx.putImageData(processedData, 0, 0); // Draw the processed data to the canvas
       onEdgeDetect(canvas.toDataURL("image/png")); // Output the result
     }, 100); // Debounce for 100ms
@@ -195,7 +203,7 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
     return () => {
       clearTimeout(handler);
     };
-  }, [currentOriginalImageData, edgeThreshold, onEdgeDetect, processImageData]);
+  }, [originalImageData, edgeThreshold, onEdgeDetect, processImageData]);
 
   const handleReset = () => {
     setEdgeThreshold(50);
@@ -239,8 +247,7 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
           />
         </div>
         <div className="relative border rounded-md overflow-hidden">
-          {/* Only show loading if a new image is being loaded AND we don't have current image data to display */}
-          {imageUrl && !currentOriginalImageData && (
+          {imageUrl && !currentLoadedImageUrl && (
             <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
               <p className="text-muted-foreground">Loading image...</p>
             </div>

@@ -17,6 +17,7 @@ const ImageSketcher: React.FC<ImageSketcherProps> = ({ imageUrl, onSketch }) => 
   const [brightness, setBrightness] = useState<number>(0); // -100 to 100
   const [contrast, setContrast] = useState<number>(0); // -100 to 100
   const [baseImageData, setBaseImageData] = useState<ImageData | null>(null); // Store base image data
+  const [currentLoadedImageUrl, setCurrentLoadedImageUrl] = useState<string | null>(null); // Tracks the URL that baseImageData corresponds to
 
   // Function to apply sketch effect on baseImageData
   const applySketchEffect = useCallback(() => {
@@ -80,7 +81,7 @@ const ImageSketcher: React.FC<ImageSketcherProps> = ({ imageUrl, onSketch }) => 
 
     ctx.putImageData(imageData, 0, 0); // Draw processed data to main canvas
     onSketch(canvas.toDataURL("image/png")); // Emit the sketched image
-  }, [brightness, contrast, baseImageData, onSketch]); // Dependencies for applySketchEffect
+  }, [brightness, contrast, baseImageData, onSketch]);
 
   // Effect 1: Load image and store baseImageData
   useEffect(() => {
@@ -89,48 +90,87 @@ const ImageSketcher: React.FC<ImageSketcherProps> = ({ imageUrl, onSketch }) => 
     const ctx = canvas?.getContext("2d");
 
     if (!ctx || !canvas) {
-      setBaseImageData(null);
       onSketch("");
+      setBaseImageData(null);
+      setCurrentLoadedImageUrl(null);
       return;
     }
 
-    setBaseImageData(null); // Clear previous base image data
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    onSketch(""); // Clear output immediately
-
+    // If imageUrl is empty, clear everything
     if (!imageUrl) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      onSketch("");
+      setBaseImageData(null);
+      setCurrentLoadedImageUrl(null);
       return;
     }
 
-    const handleImageLoad = () => {
-      canvas.width = currentImage.naturalWidth;
-      canvas.height = currentImage.naturalHeight;
-      ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear before drawing original
-      ctx.drawImage(currentImage, 0, 0);
-      setBaseImageData(ctx.getImageData(0, 0, canvas.width, canvas.height));
-    };
+    // Only load a new image if the imageUrl has actually changed from what's currently loaded
+    if (imageUrl !== currentLoadedImageUrl) {
+      // Set currentLoadedImageUrl to null temporarily to indicate loading
+      setCurrentLoadedImageUrl(null); 
+      setBaseImageData(null); // Clear baseImageData to indicate new image is coming
 
-    const handleImageError = () => {
-      console.error("Failed to load image for sketching.");
-      setBaseImageData(null);
-      onSketch("");
-    };
+      currentImage.src = imageUrl;
 
-    currentImage.onload = handleImageLoad;
-    currentImage.onerror = handleImageError;
-    currentImage.src = imageUrl;
+      const handleImageLoad = () => {
+        canvas.width = currentImage.naturalWidth;
+        canvas.height = currentImage.naturalHeight;
+        // Do NOT clear canvas here. Let Effect 2 handle drawing.
+        // If baseImageData is null, Effect 2 will not draw, preserving previous state.
+        
+        // Store the original image data from an offscreen canvas to avoid flicker
+        const offscreenCanvas = document.createElement('canvas');
+        const offscreenCtx = offscreenCanvas.getContext('2d');
+        if (!offscreenCtx) {
+          console.error("Failed to get offscreen canvas context for ImageSketcher.");
+          onSketch("");
+          setBaseImageData(null);
+          setCurrentLoadedImageUrl(null);
+          return;
+        }
+        offscreenCanvas.width = currentImage.naturalWidth;
+        offscreenCanvas.height = currentImage.naturalHeight;
+        offscreenCtx.drawImage(currentImage, 0, 0);
+        
+        setBaseImageData(offscreenCtx.getImageData(0, 0, offscreenCanvas.width, offscreenCanvas.height));
+        setCurrentLoadedImageUrl(imageUrl); // Mark this URL as successfully loaded
+      };
 
-    return () => {
-      currentImage.onload = null;
-      currentImage.onerror = null;
-    };
-  }, [imageUrl, onSketch]); // Only re-run when imageUrl changes
+      const handleImageError = () => {
+        console.error("Failed to load image for sketching.");
+        setBaseImageData(null);
+        setCurrentLoadedImageUrl(null);
+        onSketch("");
+        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear on error
+      };
+
+      currentImage.onload = handleImageLoad;
+      currentImage.onerror = handleImageError;
+
+      return () => {
+        currentImage.onload = null;
+        currentImage.onerror = null;
+      };
+    }
+  }, [imageUrl, onSketch, currentLoadedImageUrl]); // Depend on currentLoadedImageUrl
 
   // Effect 2: Debounce applying sketch effect when sliders change or base image is ready
   useEffect(() => {
-    if (!baseImageData) {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+
+    if (!baseImageData || !ctx || !canvas) {
+      // If no base image data, do NOT clear the canvas.
+      // This preserves the previous state during loading of a new image.
+      // Only clear if imageUrl is explicitly empty (handled in Effect 1).
+      onSketch("");
       return;
     }
+
+    // Set canvas dimensions to match the image data
+    canvas.width = baseImageData.width;
+    canvas.height = baseImageData.height;
 
     const handler = setTimeout(() => {
       applySketchEffect();
@@ -139,7 +179,7 @@ const ImageSketcher: React.FC<ImageSketcherProps> = ({ imageUrl, onSketch }) => 
     return () => {
       clearTimeout(handler);
     };
-  }, [brightness, contrast, baseImageData, applySketchEffect]); // Dependencies for debounce
+  }, [brightness, contrast, baseImageData, applySketchEffect, onSketch]);
 
   const handleReset = () => {
     setBrightness(0);
@@ -182,6 +222,11 @@ const ImageSketcher: React.FC<ImageSketcherProps> = ({ imageUrl, onSketch }) => 
           />
         </div>
         <div className="relative border rounded-md overflow-hidden">
+          {imageUrl && !currentLoadedImageUrl && (
+            <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+              <p className="text-muted-foreground">Loading image...</p>
+            </div>
+          )}
           <canvas ref={canvasRef} className="w-full h-auto" />
         </div>
         <Button onClick={handleReset} variant="outline">
