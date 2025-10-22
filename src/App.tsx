@@ -12,7 +12,7 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="dark"> {/* Removed storageKey to enforce dark theme */}
+    <ThemeProvider defaultTheme="dark" enableSystem={false}> {/* Enforce dark theme and disable system preference */}
       <TooltipProvider>
         <Toaster />
         <Sonner />
