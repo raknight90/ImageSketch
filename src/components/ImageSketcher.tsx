@@ -16,18 +16,30 @@ const ImageSketcher: React.FC<ImageSketcherProps> = ({ imageUrl, onSketch }) => 
   const imageRef = useRef<HTMLImageElement>(new Image());
   const [brightness, setBrightness] = useState<number>(0); // -100 to 100
   const [contrast, setContrast] = useState<number>(0); // -100 to 100
+  const [baseImageData, setBaseImageData] = useState<ImageData | null>(null); // Store base image data
 
+  // Function to apply sketch effect on baseImageData
   const applySketchEffect = useCallback(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx || !imageRef.current.complete) return;
+    if (!canvas || !ctx || !baseImageData) {
+      onSketch(""); // Clear output if no base image data
+      return;
+    }
 
-    canvas.width = imageRef.current.naturalWidth;
-    canvas.height = imageRef.current.naturalHeight;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(imageRef.current, 0, 0);
+    // Create a temporary canvas to draw the base image data
+    const tempCanvas = document.createElement('canvas');
+    const tempCtx = tempCanvas.getContext('2d');
+    if (!tempCtx) {
+      onSketch("");
+      return;
+    }
 
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    tempCanvas.width = baseImageData.width;
+    tempCanvas.height = baseImageData.height;
+    tempCtx.putImageData(baseImageData, 0, 0); // Draw original image data to temp canvas
+
+    const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
     const pixels = imageData.data;
 
     const brightnessFactor = brightness / 100; // -1 to 1
@@ -66,32 +78,73 @@ const ImageSketcher: React.FC<ImageSketcherProps> = ({ imageUrl, onSketch }) => 
       // Alpha remains unchanged
     }
 
-    ctx.putImageData(imageData, 0, 0);
-    onSketch(canvas.toDataURL("image/png"));
-  }, [brightness, contrast, onSketch]);
+    ctx.putImageData(imageData, 0, 0); // Draw processed data to main canvas
+    onSketch(canvas.toDataURL("image/png")); // Emit the sketched image
+  }, [brightness, contrast, baseImageData, onSketch]); // Dependencies for applySketchEffect
 
+  // Effect 1: Load image and store baseImageData
   useEffect(() => {
-    imageRef.current.onload = () => {
-      applySketchEffect();
+    const currentImage = imageRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+
+    if (!ctx || !canvas) {
+      setBaseImageData(null);
+      onSketch("");
+      return;
+    }
+
+    setBaseImageData(null); // Clear previous base image data
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    onSketch(""); // Clear output immediately
+
+    if (!imageUrl) {
+      return;
+    }
+
+    const handleImageLoad = () => {
+      canvas.width = currentImage.naturalWidth;
+      canvas.height = currentImage.naturalHeight;
+      ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear before drawing original
+      ctx.drawImage(currentImage, 0, 0);
+      setBaseImageData(ctx.getImageData(0, 0, canvas.width, canvas.height));
     };
 
-    if (imageUrl) {
-      imageRef.current.src = imageUrl;
-    } else {
-      // Clear canvas if no image URL
-      const canvas = canvasRef.current;
-      const ctx = canvas?.getContext("2d");
-      if (canvas && ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        onSketch(""); // Clear sketched image if source is gone
-      }
+    const handleImageError = () => {
+      console.error("Failed to load image for sketching.");
+      setBaseImageData(null);
+      onSketch("");
+    };
+
+    currentImage.onload = handleImageLoad;
+    currentImage.onerror = handleImageError;
+    currentImage.src = imageUrl;
+
+    return () => {
+      currentImage.onload = null;
+      currentImage.onerror = null;
+    };
+  }, [imageUrl, onSketch]); // Only re-run when imageUrl changes
+
+  // Effect 2: Debounce applying sketch effect when sliders change or base image is ready
+  useEffect(() => {
+    if (!baseImageData) {
+      return;
     }
-  }, [imageUrl, applySketchEffect]);
+
+    const handler = setTimeout(() => {
+      applySketchEffect();
+    }, 100); // Debounce for 100ms
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [brightness, contrast, baseImageData, applySketchEffect]); // Dependencies for debounce
 
   const handleReset = () => {
     setBrightness(0);
     setContrast(0);
-    // applySketchEffect will be called via useEffect due to state change
+    // applySketchEffect will be called via Effect 2 due to state change
   };
 
   if (!imageUrl) {

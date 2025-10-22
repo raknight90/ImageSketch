@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-// import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // Temporarily removed
-// import { Info } from "lucide-react"; // Temporarily removed
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 
 interface ImageEdgeDetectorProps {
   imageUrl: string;
@@ -117,6 +117,14 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
       return;
     }
 
+    setOriginalImageData(null); // Clear previous image data when imageUrl changes
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    onEdgeDetect(""); // Clear output immediately
+
+    if (!imageUrl) {
+      return;
+    }
+
     const handleImageLoad = () => {
       canvas.width = currentImage.naturalWidth;
       canvas.height = currentImage.naturalHeight;
@@ -134,21 +142,7 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
 
     currentImage.onload = handleImageLoad;
     currentImage.onerror = handleImageError;
-
-    if (imageUrl) {
-      // Only update src if it's a new image to avoid unnecessary reloads
-      if (currentImage.src !== imageUrl) {
-        currentImage.src = imageUrl;
-      } else if (currentImage.complete) {
-        // If the image is already loaded (e.g., from cache), process it immediately
-        handleImageLoad();
-      }
-    } else {
-      // No image URL, clear canvas and stored data
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      onEdgeDetect("");
-      setOriginalImageData(null);
-    }
+    currentImage.src = imageUrl; // Always set src if imageUrl is present
 
     // Cleanup function: remove event listeners
     return () => {
@@ -192,18 +186,18 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
         <div className="grid gap-2">
           <div className="flex items-center space-x-2">
             <Label htmlFor="edge-threshold-slider">Edge Detection Threshold ({edgeThreshold})</Label>
-            {/* <TooltipProvider> */}
-              {/* <Tooltip> */}
-                {/* <TooltipTrigger asChild> */}
-                  {/* <Info className="h-4 w-4 text-gray-500 cursor-help" /> */}
-                {/* </TooltipTrigger> */}
-                {/* <TooltipContent> */}
-                  {/* <p>Adjusts the sensitivity of edge detection.</p> */}
-                  {/* <p>Lower values detect more subtle edges (more lines).</p> */}
-                  {/* <p>Higher values detect only strong edges (fewer lines).</p> */}
-                {/* </TooltipContent> */}
-              {/* </Tooltip> */}
-            {/* </TooltipProvider> */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-4 w-4 text-gray-500 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Adjusts the sensitivity of edge detection.</p>
+                  <p>Lower values detect more subtle edges (more lines).</p>
+                  <p>Higher values detect only strong edges (fewer lines).</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           <Slider
             id="edge-threshold-slider"
