@@ -4,35 +4,36 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import ImageUpload from "@/components/ImageUpload";
 import ImageCropper from "@/components/ImageCropper";
-import ImageAdjuster from "@/components/ImageAdjuster"; // Import ImageAdjuster
+import ImageAdjuster from "@/components/ImageAdjuster";
 import ImageSketcher from "@/components/ImageSketcher";
 import ImageDisplayCard from "@/components/ImageDisplayCard";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle"; // Import ThemeToggle
 
 const Index = () => {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
-  const [adjustedImage, setAdjustedImage] = useState<string | null>(null); // New state for adjusted image
+  const [adjustedImage, setAdjustedImage] = useState<string | null>(null);
   const [sketchedImage, setSketchedImage] = useState<string | null>(null);
 
   const handleImageSelect = (imageUrl: string) => {
     setOriginalImage(imageUrl);
     setCroppedImage(null);
-    setAdjustedImage(null); // Reset adjusted
+    setAdjustedImage(null);
     setSketchedImage(null);
   };
 
   const handleCrop = (croppedImageUrl: string) => {
     setCroppedImage(croppedImageUrl);
-    setAdjustedImage(null); // Reset adjusted
+    setAdjustedImage(null);
     setSketchedImage(null);
   };
 
   const handleAdjust = (adjustedImageUrl: string) => {
     setAdjustedImage(adjustedImageUrl);
-    setSketchedImage(null); // Reset sketched if adjusted image changes
+    setSketchedImage(null);
   };
 
   const handleSketch = (sketchedImageUrl: string) => {
@@ -45,7 +46,10 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 space-y-8 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
-      <h1 className="text-4xl font-bold mb-4 text-center">Photo Sketcher App</h1>
+      <div className="flex justify-between w-full max-w-6xl mb-4">
+        <h1 className="text-4xl font-bold text-center flex-grow">Photo Sketcher App</h1>
+        <ThemeToggle /> {/* Add the ThemeToggle here */}
+      </div>
 
       <Button asChild className="mb-4">
         <Link to="/gallery">View Saved Images</Link>
@@ -58,16 +62,16 @@ const Index = () => {
           <ImageCropper imageUrl={originalImage} onCrop={handleCrop} />
         )}
 
-        {imageForAdjuster && ( // Show adjuster if original or cropped image exists
+        {imageForAdjuster && (
           <ImageAdjuster imageUrl={imageForAdjuster} onAdjust={handleAdjust} />
         )}
 
-        {imageForSketcher && ( // Show sketcher if adjusted, cropped, or original image exists
+        {imageForSketcher && (
           <ImageSketcher imageUrl={imageForSketcher} onSketch={handleSketch} />
         )}
       </div>
 
-      {(originalImage || croppedImage || adjustedImage || sketchedImage) && ( // Check all states for display
+      {(originalImage || croppedImage || adjustedImage || sketchedImage) && (
         <>
           <Separator className="w-full max-w-6xl my-8" />
           <h2 className="text-3xl font-bold text-center">Your Images</h2>
