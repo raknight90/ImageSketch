@@ -1,34 +1,47 @@
 "use client";
 
 import React, { useState } from "react";
-import { Link } from "react-router-dom"; // Import Link
+import { Link } from "react-router-dom";
 import ImageUpload from "@/components/ImageUpload";
 import ImageCropper from "@/components/ImageCropper";
+import ImageAdjuster from "@/components/ImageAdjuster"; // Import ImageAdjuster
 import ImageSketcher from "@/components/ImageSketcher";
 import ImageDisplayCard from "@/components/ImageDisplayCard";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button"; // Import Button
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
+  const [adjustedImage, setAdjustedImage] = useState<string | null>(null); // New state for adjusted image
   const [sketchedImage, setSketchedImage] = useState<string | null>(null);
 
   const handleImageSelect = (imageUrl: string) => {
     setOriginalImage(imageUrl);
-    setCroppedImage(null); // Reset cropped and sketched when a new image is uploaded
+    setCroppedImage(null);
+    setAdjustedImage(null); // Reset adjusted
     setSketchedImage(null);
   };
 
   const handleCrop = (croppedImageUrl: string) => {
     setCroppedImage(croppedImageUrl);
-    setSketchedImage(null); // Reset sketched if cropped image changes
+    setAdjustedImage(null); // Reset adjusted
+    setSketchedImage(null);
+  };
+
+  const handleAdjust = (adjustedImageUrl: string) => {
+    setAdjustedImage(adjustedImageUrl);
+    setSketchedImage(null); // Reset sketched if adjusted image changes
   };
 
   const handleSketch = (sketchedImageUrl: string) => {
     setSketchedImage(sketchedImageUrl);
   };
+
+  // Determine the source image for the next step in the pipeline
+  const imageForAdjuster = croppedImage || originalImage;
+  const imageForSketcher = adjustedImage || croppedImage || originalImage;
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 space-y-8 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
@@ -45,12 +58,16 @@ const Index = () => {
           <ImageCropper imageUrl={originalImage} onCrop={handleCrop} />
         )}
 
-        {croppedImage && (
-          <ImageSketcher imageUrl={croppedImage} onSketch={handleSketch} />
+        {imageForAdjuster && ( // Show adjuster if original or cropped image exists
+          <ImageAdjuster imageUrl={imageForAdjuster} onAdjust={handleAdjust} />
+        )}
+
+        {imageForSketcher && ( // Show sketcher if adjusted, cropped, or original image exists
+          <ImageSketcher imageUrl={imageForSketcher} onSketch={handleSketch} />
         )}
       </div>
 
-      {(originalImage || croppedImage || sketchedImage) && (
+      {(originalImage || croppedImage || adjustedImage || sketchedImage) && ( // Check all states for display
         <>
           <Separator className="w-full max-w-6xl my-8" />
           <h2 className="text-3xl font-bold text-center">Your Images</h2>
@@ -67,6 +84,13 @@ const Index = () => {
                 title="Cropped Image"
                 imageUrl={croppedImage}
                 filename="cropped-image.png"
+              />
+            )}
+            {adjustedImage && (
+              <ImageDisplayCard
+                title="Adjusted Image"
+                imageUrl={adjustedImage}
+                filename="adjusted-image.png"
               />
             )}
             {sketchedImage && (
