@@ -19,50 +19,83 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
   const [edgeThreshold, setEdgeThreshold] = useState<number>(50); // 0 to 255
   const [originalImageData, setOriginalImageData] = useState<ImageData | null>(null); // Stores the raw pixel data
 
-  // Function to apply edge detection to given ImageData
-  // This function is memoized as it only depends on its arguments
+  // Function to apply edge detection using Sobel operator
   const processImageData = useCallback((imageData: ImageData, threshold: number): ImageData => {
-    const pixels = new Uint8ClampedArray(imageData.data); // Work on a copy of the pixel data
+    const pixels = new Uint8ClampedArray(imageData.data);
     const width = imageData.width;
     const height = imageData.height;
 
     const outputImageData = new ImageData(width, height);
     const outputPixels = outputImageData.data;
 
-    // Convert to grayscale first for simpler edge detection
+    // Convert to grayscale first
     const grayPixels = new Uint8ClampedArray(width * height);
     for (let i = 0; i < pixels.length; i += 4) {
       const r = pixels[i];
       const g = pixels[i + 1];
       const b = pixels[i + 2];
-      grayPixels[i / 4] = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      grayPixels[i / 4] = 0.2126 * r + 0.7152 * g + 0.0722 * b; // Luminosity method
     }
 
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        const i = y * width + x;
-        const p = grayPixels[i];
+    // Sobel kernels
+    const sobelX = [
+      [-1, 0, 1],
+      [-2, 0, 2],
+      [-1, 0, 1]
+    ];
 
-        // Get neighbors (handle boundaries)
-        const pRight = (x < width - 1) ? grayPixels[y * width + (x + 1)] : p;
-        const pBottom = (y < height - 1) ? grayPixels[(y + 1) * width + x] : p;
+    const sobelY = [
+      [-1, -2, -1],
+      [0, 0, 0],
+      [1, 2, 1]
+    ];
 
-        // Calculate horizontal and vertical gradients (simple difference)
-        const gx = pRight - p;
-        const gy = pBottom - p;
+    for (let y = 1; y < height - 1; y++) { // Iterate excluding borders
+      for (let x = 1; x < width - 1; x++) {
+        let pixelX = 0;
+        let pixelY = 0;
 
-        // Magnitude of gradient (approximates edge strength)
-        const magnitude = Math.sqrt(gx * gx + gy * gy);
+        // Apply Sobel kernels
+        for (let ky = -1; ky <= 1; ky++) {
+          for (let kx = -1; kx <= 1; kx++) {
+            const neighborX = x + kx;
+            const neighborY = y + ky;
+            const neighborIndex = neighborY * width + neighborX;
+            const grayValue = grayPixels[neighborIndex];
+
+            pixelX += grayValue * sobelX[ky + 1][kx + 1];
+            pixelY += grayValue * sobelY[ky + 1][kx + 1];
+          }
+        }
+
+        // Calculate gradient magnitude
+        const magnitude = Math.sqrt(pixelX * pixelX + pixelY * pixelY);
 
         // Apply threshold: black for strong edges, white for non-edges
         const edgeColor = magnitude > threshold ? 0 : 255;
 
-        outputPixels[i * 4] = edgeColor;     // Red
-        outputPixels[i * 4 + 1] = edgeColor; // Green
-        outputPixels[i * 4 + 2] = edgeColor; // Blue
-        outputPixels[i * 4 + 3] = 255;       // Alpha
+        const outputIndex = (y * width + x) * 4;
+        outputPixels[outputIndex] = edgeColor;     // Red
+        outputPixels[outputIndex + 1] = edgeColor; // Green
+        outputPixels[outputIndex + 2] = edgeColor; // Blue
+        outputPixels[outputIndex + 3] = 255;       // Alpha
       }
     }
+
+    // Handle borders (set to white or black, or copy original)
+    // For simplicity, let's set borders to white (no edge)
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        if (x === 0 || x === width - 1 || y === 0 || y === height - 1) {
+          const outputIndex = (y * width + x) * 4;
+          outputPixels[outputIndex] = 255;
+          outputPixels[outputIndex + 1] = 255;
+          outputPixels[outputIndex + 2] = 255;
+          outputPixels[outputIndex + 3] = 255;
+        }
+      }
+    }
+
     return outputImageData;
   }, []); // No dependencies, as it operates on passed arguments
 
