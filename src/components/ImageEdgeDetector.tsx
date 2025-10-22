@@ -19,8 +19,9 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
   const [edgeThreshold, setEdgeThreshold] = useState<number>(50); // 0 to 255
   const [originalImageData, setOriginalImageData] = useState<ImageData | null>(null); // Stores the raw pixel data
 
-  // Function to apply edge detection using Sobel operator
+  // Function to apply edge detection using a simple adjacent pixel difference
   const processImageData = useCallback((imageData: ImageData, threshold: number): ImageData => {
+    console.log("Processing image data with threshold:", threshold);
     const pixels = new Uint8ClampedArray(imageData.data);
     const width = imageData.width;
     const height = imageData.height;
@@ -37,62 +38,30 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
       grayPixels[i / 4] = 0.2126 * r + 0.7152 * g + 0.0722 * b; // Luminosity method
     }
 
-    // Sobel kernels
-    const sobelX = [
-      [-1, 0, 1],
-      [-2, 0, 2],
-      [-1, 0, 1]
-    ];
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const i = y * width + x;
+        const p = grayPixels[i];
 
-    const sobelY = [
-      [-1, -2, -1],
-      [0, 0, 0],
-      [1, 2, 1]
-    ];
+        // Get neighbors, handling boundaries by using the pixel itself if a neighbor is out of bounds
+        const pRight = (x < width - 1) ? grayPixels[y * width + (x + 1)] : p;
+        const pBottom = (y < height - 1) ? grayPixels[(y + 1) * width + x] : p;
 
-    for (let y = 1; y < height - 1; y++) { // Iterate excluding borders
-      for (let x = 1; x < width - 1; x++) {
-        let pixelX = 0;
-        let pixelY = 0;
+        // Calculate simple differences
+        const diffX = Math.abs(p - pRight);
+        const diffY = Math.abs(p - pBottom);
 
-        // Apply Sobel kernels
-        for (let ky = -1; ky <= 1; ky++) {
-          for (let kx = -1; kx <= 1; kx++) {
-            const neighborX = x + kx;
-            const neighborY = y + ky;
-            const neighborIndex = neighborY * width + neighborX;
-            const grayValue = grayPixels[neighborIndex];
-
-            pixelX += grayValue * sobelX[ky + 1][kx + 1];
-            pixelY += grayValue * sobelY[ky + 1][kx + 1];
-          }
-        }
-
-        // Calculate gradient magnitude
-        const magnitude = Math.sqrt(pixelX * pixelX + pixelY * pixelY);
+        // Combine differences (using max for simplicity)
+        const magnitude = Math.max(diffX, diffY);
 
         // Apply threshold: black for strong edges, white for non-edges
         const edgeColor = magnitude > threshold ? 0 : 255;
 
-        const outputIndex = (y * width + x) * 4;
+        const outputIndex = i * 4;
         outputPixels[outputIndex] = edgeColor;     // Red
         outputPixels[outputIndex + 1] = edgeColor; // Green
         outputPixels[outputIndex + 2] = edgeColor; // Blue
         outputPixels[outputIndex + 3] = 255;       // Alpha
-      }
-    }
-
-    // Handle borders (set to white or black, or copy original)
-    // For simplicity, let's set borders to white (no edge)
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        if (x === 0 || x === width - 1 || y === 0 || y === height - 1) {
-          const outputIndex = (y * width + x) * 4;
-          outputPixels[outputIndex] = 255;
-          outputPixels[outputIndex + 1] = 255;
-          outputPixels[outputIndex + 2] = 255;
-          outputPixels[outputIndex + 3] = 255;
-        }
       }
     }
 
@@ -101,6 +70,7 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
 
   // Effect 1: Handles loading the image and storing its original pixel data
   useEffect(() => {
+    console.log("Image loading effect triggered for imageUrl:", imageUrl);
     const currentImage = imageRef.current;
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
@@ -112,6 +82,7 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
     }
 
     const handleImageLoad = () => {
+      console.log("Image loaded successfully.");
       canvas.width = currentImage.naturalWidth;
       canvas.height = currentImage.naturalHeight;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -153,6 +124,7 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
 
   // Effect 2: Applies edge detection when originalImageData is available or threshold changes
   useEffect(() => {
+    console.log("Edge detection application effect triggered. Threshold:", edgeThreshold);
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
 
