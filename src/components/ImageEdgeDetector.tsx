@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // Import Tooltip components
-import { Info } from "lucide-react"; // Import Info icon
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 
 interface ImageEdgeDetectorProps {
   imageUrl: string;
@@ -75,22 +75,36 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
   }, [edgeThreshold, onEdgeDetect]);
 
   useEffect(() => {
-    imageRef.current.onload = () => {
+    const currentImage = imageRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+
+    if (!ctx || !canvas) return;
+
+    const handleImageLoad = () => {
       applyEdgeDetection();
     };
 
+    currentImage.onload = handleImageLoad;
+
     if (imageUrl) {
-      imageRef.current.src = imageUrl;
-    } else {
-      // Clear canvas if no image URL
-      const canvas = canvasRef.current;
-      const ctx = canvas?.getContext("2d");
-      if (canvas && ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        onEdgeDetect(""); // Clear edge-detected image if source is gone
+      if (currentImage.src !== imageUrl) {
+        // New image URL, load it
+        currentImage.src = imageUrl;
+      } else if (currentImage.complete) {
+        // Same image, already loaded, just re-apply effect
+        applyEdgeDetection();
       }
+    } else {
+      // No image URL, clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      onEdgeDetect("");
     }
-  }, [imageUrl, applyEdgeDetection]);
+
+    return () => {
+      currentImage.onload = null; // Clean up event listener
+    };
+  }, [imageUrl, applyEdgeDetection, onEdgeDetect]);
 
   const handleReset = () => {
     setEdgeThreshold(50);
