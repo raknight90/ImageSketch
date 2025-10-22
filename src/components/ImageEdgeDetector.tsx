@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
@@ -17,27 +17,16 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const imageRef = useRef<HTMLImageElement>(new Image());
   const [edgeThreshold, setEdgeThreshold] = useState<number>(50); // 0 to 255
+  const [originalImageData, setOriginalImageData] = useState<ImageData | null>(null); // Stores the raw pixel data
 
-  // This function will be recreated on every render, capturing the latest edgeThreshold
-  const applyEdgeDetection = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx || !imageRef.current.complete) {
-      // console.log("Skipping applyEdgeDetection: canvas, ctx, or image not ready.");
-      return;
-    }
+  // Function to apply edge detection to given ImageData
+  // This function is memoized as it only depends on its arguments
+  const processImageData = useCallback((imageData: ImageData, threshold: number): ImageData => {
+    const pixels = new Uint8ClampedArray(imageData.data); // Work on a copy of the pixel data
+    const width = imageData.width;
+    const height = imageData.height;
 
-    canvas.width = imageRef.current.naturalWidth;
-    canvas.height = imageRef.current.naturalHeight;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(imageRef.current, 0, 0);
-
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const pixels = imageData.data;
-    const width = canvas.width;
-    const height = canvas.height;
-
-    const outputImageData = ctx.createImageData(width, height);
+    const outputImageData = new ImageData(width, height);
     const outputPixels = outputImageData.data;
 
     // Convert to grayscale first for simpler edge detection
@@ -66,7 +55,7 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
         const magnitude = Math.sqrt(gx * gx + gy * gy);
 
         // Apply threshold: black for strong edges, white for non-edges
-        const edgeColor = magnitude > edgeThreshold ? 0 : 255;
+        const edgeColor = magnitude > threshold ? 0 : 255;
 
         outputPixels[i * 4] = edgeColor;     // Red
         outputPixels[i * 4 + 1] = edgeColor; // Green
@@ -74,48 +63,52 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
         outputPixels[i * 4 + 3] = 255;       // Alpha
       }
     }
-    ctx.putImageData(outputImageData, 0, 0);
-    onEdgeDetect(canvas.toDataURL("image/png"));
-  };
+    return outputImageData;
+  }, []); // No dependencies, as it operates on passed arguments
 
+  // Effect 1: Handles loading the image and storing its original pixel data
   useEffect(() => {
     const currentImage = imageRef.current;
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
 
     if (!ctx || !canvas) {
-      onEdgeDetect(""); // Clear output if canvas/context not ready
+      onEdgeDetect("");
+      setOriginalImageData(null); // Clear stored data if canvas not ready
       return;
     }
 
-    // Define the onload handler
     const handleImageLoad = () => {
-      applyEdgeDetection();
+      canvas.width = currentImage.naturalWidth;
+      canvas.height = currentImage.naturalHeight;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(currentImage, 0, 0);
+      // Store the original image data
+      setOriginalImageData(ctx.getImageData(0, 0, canvas.width, canvas.height));
     };
 
-    // Define the onerror handler
     const handleImageError = () => {
       console.error("Failed to load image for edge detection.");
       onEdgeDetect("");
+      setOriginalImageData(null); // Clear stored data on error
     };
 
-    // Assign handlers
     currentImage.onload = handleImageLoad;
     currentImage.onerror = handleImageError;
 
     if (imageUrl) {
-      // If the image URL has changed or is new, update the src
+      // Only update src if it's a new image to avoid unnecessary reloads
       if (currentImage.src !== imageUrl) {
         currentImage.src = imageUrl;
       } else if (currentImage.complete) {
-        // If the image is already loaded (e.g., from cache) and URL hasn't changed,
-        // manually trigger the effect application.
-        applyEdgeDetection();
+        // If the image is already loaded (e.g., from cache), process it immediately
+        handleImageLoad();
       }
     } else {
-      // No image URL, clear canvas and output
+      // No image URL, clear canvas and stored data
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       onEdgeDetect("");
+      setOriginalImageData(null);
     }
 
     // Cleanup function: remove event listeners
@@ -123,11 +116,28 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
       currentImage.onload = null;
       currentImage.onerror = null;
     };
-  }, [imageUrl, edgeThreshold, onEdgeDetect]); // Depend on imageUrl and edgeThreshold
+  }, [imageUrl, onEdgeDetect]); // Only re-run if imageUrl changes
+
+  // Effect 2: Applies edge detection when originalImageData is available or threshold changes
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+
+    if (originalImageData && ctx && canvas) {
+      // Process the stored original image data with the current threshold
+      const processedData = processImageData(originalImageData, edgeThreshold);
+      ctx.putImageData(processedData, 0, 0); // Draw the processed data to the canvas
+      onEdgeDetect(canvas.toDataURL("image/png")); // Output the result
+    } else if (!originalImageData && ctx && canvas) {
+      // If originalImageData becomes null (e.g., imageUrl cleared), clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      onEdgeDetect("");
+    }
+  }, [originalImageData, edgeThreshold, onEdgeDetect, processImageData]); // Re-run when original data or threshold changes
 
   const handleReset = () => {
     setEdgeThreshold(50);
-    // The useEffect will re-run due to edgeThreshold change and apply the effect
+    // The second useEffect will re-run due to edgeThreshold change and apply the effect
   };
 
   if (!imageUrl) {
