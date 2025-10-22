@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // Import Tooltip components
+import { Info } from "lucide-react"; // Import Info icon
 
 interface ImageEdgeDetectorProps {
   imageUrl: string;
@@ -106,7 +108,21 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid gap-2">
-          <Label htmlFor="edge-threshold-slider">Edge Sensitivity ({edgeThreshold})</Label>
+          <div className="flex items-center space-x-2">
+            <Label htmlFor="edge-threshold-slider">Edge Detection Threshold ({edgeThreshold})</Label>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-4 w-4 text-gray-500 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Adjusts the sensitivity of edge detection.</p>
+                  <p>Lower values detect more subtle edges (more lines).</p>
+                  <p>Higher values detect only strong edges (fewer lines).</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           <Slider
             id="edge-threshold-slider"
             min={0}
@@ -121,7 +137,7 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
           <canvas ref={canvasRef} className="w-full h-auto" />
         </div>
         <Button onClick={handleReset} variant="outline">
-          Reset Edge Sensitivity
+          Reset Edge Threshold
         </Button>
       </CardContent>
     </Card>
