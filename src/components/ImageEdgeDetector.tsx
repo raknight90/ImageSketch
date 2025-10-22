@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Info } from "lucide-react";
+// import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"; // Temporarily removed
+// import { Info } from "lucide-react"; // Temporarily removed
 
 interface ImageEdgeDetectorProps {
   imageUrl: string;
@@ -192,23 +192,23 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
         <div className="grid gap-2">
           <div className="flex items-center space-x-2">
             <Label htmlFor="edge-threshold-slider">Edge Detection Threshold ({edgeThreshold})</Label>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 text-gray-500 cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Adjusts the sensitivity of edge detection.</p>
-                  <p>Lower values detect more subtle edges (more lines).</p>
-                  <p>Higher values detect only strong edges (fewer lines).</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            {/* <TooltipProvider> */}
+              {/* <Tooltip> */}
+                {/* <TooltipTrigger asChild> */}
+                  {/* <Info className="h-4 w-4 text-gray-500 cursor-help" /> */}
+                {/* </TooltipTrigger> */}
+                {/* <TooltipContent> */}
+                  {/* <p>Adjusts the sensitivity of edge detection.</p> */}
+                  {/* <p>Lower values detect more subtle edges (more lines).</p> */}
+                  {/* <p>Higher values detect only strong edges (fewer lines).</p> */}
+                {/* </TooltipContent> */}
+              {/* </Tooltip> */}
+            {/* </TooltipProvider> */}
           </div>
           <Slider
             id="edge-threshold-slider"
             min={0}
-            max={1500} {/* Increased max value */}
+            max={1500}
             step={1}
             value={[edgeThreshold]}
             onValueChange={(value) => setEdgeThreshold(value[0])}
