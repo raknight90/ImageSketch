@@ -6,13 +6,13 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Gallery from "./pages/Gallery";
 import NotFound from "./pages/NotFound";
-import { ThemeProvider } from "./components/theme-provider"; // Import ThemeProvider
+import { ThemeProvider } from "./components/theme-provider";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme"> {/* Wrap with ThemeProvider */}
+    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme"> {/* Set defaultTheme to "dark" */}
       <TooltipProvider>
         <Toaster />
         <Sonner />

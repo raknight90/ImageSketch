@@ -10,7 +10,8 @@ import ImageDisplayCard from "@/components/ImageDisplayCard";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle"; // Import ThemeToggle
+// ThemeToggle is no longer needed as the app will be dark theme only
+// import { ThemeToggle } from "@/components/theme-toggle"; 
 
 const Index = () => {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -45,10 +46,10 @@ const Index = () => {
   const imageForSketcher = adjustedImage || croppedImage || originalImage;
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-4 space-y-8"> {/* Removed explicit bg/text classes */}
+    <div className="min-h-screen flex flex-col items-center p-4 space-y-8">
       <div className="flex justify-between w-full max-w-6xl mb-4">
         <h1 className="text-4xl font-bold text-center flex-grow">Photo Sketcher App</h1>
-        <ThemeToggle />
+        {/* ThemeToggle removed */}
       </div>
 
       <Button asChild className="mb-4">
