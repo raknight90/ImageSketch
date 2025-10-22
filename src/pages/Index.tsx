@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
+import { Link } from "react-router-dom"; // Import Link
 import ImageUpload from "@/components/ImageUpload";
 import ImageCropper from "@/components/ImageCropper";
 import ImageSketcher from "@/components/ImageSketcher";
 import ImageDisplayCard from "@/components/ImageDisplayCard";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button"; // Import Button
 
 const Index = () => {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -31,6 +33,10 @@ const Index = () => {
   return (
     <div className="min-h-screen flex flex-col items-center p-4 space-y-8 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-50">
       <h1 className="text-4xl font-bold mb-4 text-center">Photo Sketcher App</h1>
+
+      <Button asChild className="mb-4">
+        <Link to="/gallery">View Saved Images</Link>
+      </Button>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl">
         <ImageUpload onImageSelect={handleImageSelect} />

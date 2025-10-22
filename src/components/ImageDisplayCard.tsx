@@ -3,6 +3,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useImageGallery } from "@/hooks/use-image-gallery"; // Import the new hook
 
 interface ImageDisplayCardProps {
   title: string;
@@ -11,6 +12,8 @@ interface ImageDisplayCardProps {
 }
 
 const ImageDisplayCard: React.FC<ImageDisplayCardProps> = ({ title, imageUrl, filename }) => {
+  const { saveImage } = useImageGallery(); // Use the hook
+
   const handleDownload = () => {
     const link = document.createElement("a");
     link.href = imageUrl;
@@ -18,6 +21,10 @@ const ImageDisplayCard: React.FC<ImageDisplayCardProps> = ({ title, imageUrl, fi
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleSaveToGallery = () => {
+    saveImage(title, imageUrl);
   };
 
   if (!imageUrl) {
@@ -31,7 +38,10 @@ const ImageDisplayCard: React.FC<ImageDisplayCardProps> = ({ title, imageUrl, fi
       </CardHeader>
       <CardContent className="space-y-4">
         <img src={imageUrl} alt={title} className="max-w-full h-auto rounded-md shadow-md" />
-        <Button onClick={handleDownload}>Download {title}</Button>
+        <div className="flex flex-col space-y-2">
+          <Button onClick={handleDownload}>Download {title}</Button>
+          <Button variant="outline" onClick={handleSaveToGallery}>Save to Gallery</Button>
+        </div>
       </CardContent>
     </Card>
   );
