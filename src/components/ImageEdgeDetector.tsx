@@ -50,6 +50,8 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
       [1, 2, 1]
     ];
 
+    let maxMagnitude = 0; // For debugging the magnitude range
+
     for (let y = 1; y < height - 1; y++) { // Iterate excluding borders
       for (let x = 1; x < width - 1; x++) {
         let pixelX = 0;
@@ -70,6 +72,9 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
 
         // Calculate gradient magnitude
         const magnitude = Math.sqrt(pixelX * pixelX + pixelY * pixelY);
+        if (magnitude > maxMagnitude) {
+          maxMagnitude = magnitude; // Update max magnitude for debugging
+        }
 
         // Apply threshold: black for strong edges, white for non-edges
         const edgeColor = magnitude > threshold ? 0 : 255;
@@ -81,6 +86,7 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
         outputPixels[outputIndex + 3] = 255;       // Alpha
       }
     }
+    console.log("Max gradient magnitude found:", maxMagnitude); // Log max magnitude
 
     // Handle borders (set to white or black, or copy original)
     // For simplicity, let's set borders to white (no edge)
@@ -202,7 +208,7 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
           <Slider
             id="edge-threshold-slider"
             min={0}
-            max={200}
+            max={1500} {/* Increased max value */}
             step={1}
             value={[edgeThreshold]}
             onValueChange={(value) => setEdgeThreshold(value[0])}
