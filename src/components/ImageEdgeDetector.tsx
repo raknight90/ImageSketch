@@ -19,54 +19,25 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
   const [edgeThreshold, setEdgeThreshold] = useState<number>(50); // 0 to 255
   const [originalImageData, setOriginalImageData] = useState<ImageData | null>(null); // Stores the raw pixel data
 
-  // Function to apply edge detection using a simple adjacent pixel difference
+  // TEMPORARY DEBUGGING FUNCTION: Fills canvas with a color based on threshold
   const processImageData = useCallback((imageData: ImageData, threshold: number): ImageData => {
-    console.log("Processing image data with threshold:", threshold);
-    const pixels = new Uint8ClampedArray(imageData.data);
+    console.log("DEBUG: processImageData called with threshold:", threshold);
     const width = imageData.width;
     const height = imageData.height;
-
     const outputImageData = new ImageData(width, height);
     const outputPixels = outputImageData.data;
 
-    // Convert to grayscale first
-    const grayPixels = new Uint8ClampedArray(width * height);
-    for (let i = 0; i < pixels.length; i += 4) {
-      const r = pixels[i];
-      const g = pixels[i + 1];
-      const b = pixels[i + 2];
-      grayPixels[i / 4] = 0.2126 * r + 0.7152 * g + 0.0722 * b; // Luminosity method
+    // Scale threshold to a color value (0-255)
+    const colorValue = Math.min(255, Math.max(0, threshold * 1.275)); // Scale 0-200 to 0-255
+
+    for (let i = 0; i < outputPixels.length; i += 4) {
+      outputPixels[i] = colorValue;     // Red
+      outputPixels[i + 1] = colorValue; // Green
+      outputPixels[i + 2] = colorValue; // Blue
+      outputPixels[i + 3] = 255;        // Alpha
     }
-
-    for (let y = 0; y < height; y++) {
-      for (let x = 0; x < width; x++) {
-        const i = y * width + x;
-        const p = grayPixels[i];
-
-        // Get neighbors, handling boundaries by using the pixel itself if a neighbor is out of bounds
-        const pRight = (x < width - 1) ? grayPixels[y * width + (x + 1)] : p;
-        const pBottom = (y < height - 1) ? grayPixels[(y + 1) * width + x] : p;
-
-        // Calculate simple differences
-        const diffX = Math.abs(p - pRight);
-        const diffY = Math.abs(p - pBottom);
-
-        // Combine differences (using max for simplicity)
-        const magnitude = Math.max(diffX, diffY);
-
-        // Apply threshold: black for strong edges, white for non-edges
-        const edgeColor = magnitude > threshold ? 0 : 255;
-
-        const outputIndex = i * 4;
-        outputPixels[outputIndex] = edgeColor;     // Red
-        outputPixels[outputIndex + 1] = edgeColor; // Green
-        outputPixels[outputIndex + 2] = edgeColor; // Blue
-        outputPixels[outputIndex + 3] = 255;       // Alpha
-      }
-    }
-
     return outputImageData;
-  }, []); // No dependencies, as it operates on passed arguments
+  }, []);
 
   // Effect 1: Handles loading the image and storing its original pixel data
   useEffect(() => {
@@ -177,7 +148,10 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
             max={200}
             step={1}
             value={[edgeThreshold]}
-            onValueChange={(value) => setEdgeThreshold(value[0])}
+            onValueChange={(value) => {
+              console.log("Slider value changed to:", value[0]);
+              setEdgeThreshold(value[0]);
+            }}
             className="w-full"
           />
         </div>
