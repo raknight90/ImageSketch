@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import * as React from "react"; // Changed import style
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import ImageUpload from "@/components/ImageUpload";
 import ImageCropper from "@/components/ImageCropper";
