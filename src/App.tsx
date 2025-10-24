@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom"; // Added useNavigate
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import Index from "./pages/Index";
 import Gallery from "./pages/Gallery";
 import NotFound from "./pages/NotFound";
@@ -11,7 +11,6 @@ import { ThemeProvider } from "./components/theme-provider";
 import { SessionContextProvider, useSupabase } from "./components/SessionContextProvider";
 import React from "react";
 
-console.log("VITE_SUPABASE_URL from App.tsx:", import.meta.env.VITE_SUPABASE_URL); // <--- ADD THIS LINE
 
 const queryClient = new QueryClient();
 
