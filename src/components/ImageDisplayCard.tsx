@@ -3,7 +3,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useImageGallery } from "@/hooks/use-image-gallery"; // Import the new hook
+import { useImageGallery } from "@/hooks/use-image-gallery";
 
 interface ImageDisplayCardProps {
   title: string;
@@ -12,7 +12,7 @@ interface ImageDisplayCardProps {
 }
 
 const ImageDisplayCard: React.FC<ImageDisplayCardProps> = ({ title, imageUrl, filename }) => {
-  const { saveImage } = useImageGallery(); // Use the hook
+  const { saveImage } = useImageGallery();
 
   const handleDownload = () => {
     const link = document.createElement("a");
@@ -24,6 +24,8 @@ const ImageDisplayCard: React.FC<ImageDisplayCardProps> = ({ title, imageUrl, fi
   };
 
   const handleSaveToGallery = () => {
+    console.log("ImageDisplayCard: Save to Gallery button clicked for:", title);
+    console.log("ImageDisplayCard: imageUrl length:", imageUrl ? imageUrl.length : 0);
     saveImage(title, imageUrl);
   };
 
