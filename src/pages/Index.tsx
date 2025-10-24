@@ -91,9 +91,9 @@ const Index = () => {
             )}
             {sketchedImage && (
               <ImageDisplayCard
-                title="Sketched Image"
+                title="Tonal Image"
                 imageUrl={sketchedImage}
-                filename="sketched-image.png"
+                filename="tonal-image.png"
               />
             )}
             {edgeDetectedImage && (
