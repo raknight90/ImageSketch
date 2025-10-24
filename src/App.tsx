@@ -2,14 +2,16 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom"; // Added useNavigate
 import Index from "./pages/Index";
 import Gallery from "./pages/Gallery";
 import NotFound from "./pages/NotFound";
-import Login from "./pages/Login"; // Import the new Login page
+import Login from "./pages/Login";
 import { ThemeProvider } from "./components/theme-provider";
-import { SessionContextProvider, useSupabase } from "./components/SessionContextProvider"; // Import SessionContextProvider and useSupabase
-import React from "react"; // Ensure React is imported
+import { SessionContextProvider, useSupabase } from "./components/SessionContextProvider";
+import React from "react";
+
+console.log("VITE_SUPABASE_URL from App.tsx:", import.meta.env.VITE_SUPABASE_URL); // <--- ADD THIS LINE
 
 const queryClient = new QueryClient();
 
@@ -42,7 +44,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <SessionContextProvider> {/* Wrap routes with SessionContextProvider */}
+          <SessionContextProvider>
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
