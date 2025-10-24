@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 import ImageUpload from "@/components/ImageUpload";
 import ImageCropper from "@/components/ImageCropper";
 import ImageSketcher from "@/components/ImageSketcher";
-import ImageEdgeDetector from "@/components/ImageEdgeDetector"; // New import
+import ImageEdgeDetector from "@/components/ImageEdgeDetector";
 import ImageDisplayCard from "@/components/ImageDisplayCard";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Separator } from "@/components/ui/separator";
@@ -15,7 +15,7 @@ const Index = () => {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
   const [sketchedImage, setSketchedImage] = useState<string | null>(null);
-  const [edgeDetectedImage, setEdgeDetectedImage] = useState<string | null>(null); // New state
+  const [edgeDetectedImage, setEdgeDetectedImage] = useState<string | null>(null);
 
   const handleImageSelect = (imageUrl: string) => {
     setOriginalImage(imageUrl);
@@ -35,13 +35,14 @@ const Index = () => {
     setEdgeDetectedImage(null); // Reset subsequent effects
   };
 
-  const handleEdgeDetect = (edgeDetectedImageUrl: string) => { // New handler
+  const handleEdgeDetect = (edgeDetectedImageUrl: string) => {
     setEdgeDetectedImage(edgeDetectedImageUrl);
   };
 
   // Determine the source image for the next step in the pipeline
   const imageForSketcher = croppedImage || originalImage;
-  const imageForEdgeDetector = sketchedImage || croppedImage || originalImage; // Source for edge detector
+  // The ImageEdgeDetector will now always use the originalImage
+  // const imageForEdgeDetector = sketchedImage || croppedImage || originalImage; // Old source
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 space-y-8">
@@ -64,8 +65,8 @@ const Index = () => {
           <ImageSketcher imageUrl={imageForSketcher} onSketch={handleSketch} />
         )}
 
-        {imageForEdgeDetector && ( // Render Edge Detector if any image is available
-          <ImageEdgeDetector imageUrl={imageForEdgeDetector} onEdgeDetect={handleEdgeDetect} />
+        {originalImage && ( // Render Edge Detector if original image is available
+          <ImageEdgeDetector imageUrl={originalImage} onEdgeDetect={handleEdgeDetect} />
         )}
       </div>
 
@@ -95,7 +96,7 @@ const Index = () => {
                 filename="sketched-image.png"
               />
             )}
-            {edgeDetectedImage && ( // Display card for edge-detected image
+            {edgeDetectedImage && (
               <ImageDisplayCard
                 title="Edge Detected Image"
                 imageUrl={edgeDetectedImage}
