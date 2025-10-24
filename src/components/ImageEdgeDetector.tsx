@@ -239,7 +239,7 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
           <Slider
             id="edge-threshold-slider"
             min={0}
-            max={1500}
+            max={300}
             step={1}
             value={[edgeThreshold]}
             onValueChange={(value) => setEdgeThreshold(value[0])}
