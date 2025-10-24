@@ -194,7 +194,7 @@ const ImageSketcher: React.FC<ImageSketcherProps> = ({ imageUrl, onSketch }) => 
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>Sketch Your Image</CardTitle>
+        <CardTitle>Tonal Values</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid gap-2">
