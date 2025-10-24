@@ -1,7 +1,6 @@
 "use client";
 
-import * as React from "react"; // Changed import style
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import ImageUpload from "@/components/ImageUpload";
 import ImageCropper from "@/components/ImageCropper";
@@ -13,7 +12,7 @@ import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
-const Index = () => {
+const Index: React.FC = () => { // Explicitly define as React.FC
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
   const [sketchedImage, setSketchedImage] = useState<string | null>(null);
