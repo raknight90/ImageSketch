@@ -24,14 +24,20 @@ export function useImageGallery() {
         const parsedImages = JSON.parse(storedImages);
         setGalleryImages(parsedImages);
         console.log("useImageGallery: Loaded images:", parsedImages);
+        if (parsedImages.length > 0) {
+          toast.info(`Loaded ${parsedImages.length} images from gallery.`);
+        } else {
+          toast.info("Gallery is empty.");
+        }
       } else {
         console.log("useImageGallery: No images found in localStorage.");
+        toast.info("Gallery is empty.");
       }
     } catch (error) {
       console.error("useImageGallery: Failed to load images from localStorage:", error);
       toast.error("Failed to load saved images.");
     }
-  }, []);
+  }, []); // Empty dependency array, runs once on mount
 
   // Save images to localStorage whenever galleryImages changes
   useEffect(() => {
