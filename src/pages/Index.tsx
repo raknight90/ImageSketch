@@ -7,6 +7,7 @@ import ImageCropper from "@/components/ImageCropper";
 import ImageSketcher from "@/components/ImageSketcher";
 import ImageEdgeDetector from "@/components/ImageEdgeDetector";
 import ImageDisplayCard from "@/components/ImageDisplayCard";
+import OriginalImageDisplayCard from "@/components/OriginalImageDisplayCard"; // Import the new component
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -76,10 +77,9 @@ const Index = () => {
           <h2 className="text-3xl font-bold text-center">Your Images</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl">
             {originalImage && (
-              <ImageDisplayCard
+              <OriginalImageDisplayCard // Using the new component here
                 title="Original Image"
                 imageUrl={originalImage}
-                filename="original-image.png"
               />
             )}
             {croppedImage && (
@@ -98,7 +98,7 @@ const Index = () => {
             )}
             {edgeDetectedImage && (
               <ImageDisplayCard
-                title="Edge Detected Image"
+                title="Sketched Image"
                 imageUrl={edgeDetectedImage}
                 filename="edge-detected-image.png"
               />
