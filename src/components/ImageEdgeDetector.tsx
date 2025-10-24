@@ -217,7 +217,7 @@ const ImageEdgeDetector: React.FC<ImageEdgeDetectorProps> = ({ imageUrl, onEdgeD
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>Detect Edges</CardTitle>
+        <CardTitle>Sketched Image</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid gap-2">
