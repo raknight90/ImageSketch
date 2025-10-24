@@ -12,7 +12,7 @@ import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 
-const Index: React.FC = () => { // Explicitly define as React.FC
+const Index: React.FC = () => {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
   const [sketchedImage, setSketchedImage] = useState<string | null>(null);
@@ -22,25 +22,24 @@ const Index: React.FC = () => { // Explicitly define as React.FC
     setOriginalImage(imageUrl);
     setCroppedImage(null);
     setSketchedImage(null);
-    setEdgeDetectedImage(null); // Reset all subsequent effects
+    setEdgeDetectedImage(null);
   };
 
   const handleCrop = (croppedImageUrl: string) => {
     setCroppedImage(croppedImageUrl);
     setSketchedImage(null);
-    setEdgeDetectedImage(null); // Reset subsequent effects
+    setEdgeDetectedImage(null);
   };
 
   const handleSketch = (sketchedImageUrl: string) => {
     setSketchedImage(sketchedImageUrl);
-    setEdgeDetectedImage(null); // Reset subsequent effects
+    setEdgeDetectedImage(null);
   };
 
   const handleEdgeDetect = (edgeDetectedImageUrl: string) => {
     setEdgeDetectedImage(edgeDetectedImageUrl);
   };
 
-  // Determine the source image for the next step in the pipeline
   const imageForSketcher = croppedImage || originalImage;
 
   return (
@@ -85,7 +84,7 @@ const Index: React.FC = () => { // Explicitly define as React.FC
                 title="Cropped Image"
                 imageUrl={croppedImage}
                 filename="cropped-image.png"
-                showSaveButton={false} {/* Hide save button for cropped image */}
+                showSaveButton={false}
               />
             )}
             {sketchedImage && (
