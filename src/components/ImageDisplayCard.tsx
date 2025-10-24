@@ -9,9 +9,10 @@ interface ImageDisplayCardProps {
   title: string;
   imageUrl: string;
   filename: string;
+  showSaveButton?: boolean; // New prop
 }
 
-const ImageDisplayCard: React.FC<ImageDisplayCardProps> = ({ title, imageUrl, filename }) => {
+const ImageDisplayCard: React.FC<ImageDisplayCardProps> = ({ title, imageUrl, filename, showSaveButton = true }) => {
   const { saveImage } = useImageGallery();
 
   const handleDownload = () => {
@@ -42,7 +43,9 @@ const ImageDisplayCard: React.FC<ImageDisplayCardProps> = ({ title, imageUrl, fi
         <img src={imageUrl} alt={title} className="max-w-full h-auto rounded-md shadow-md" />
         <div className="flex flex-col space-y-2">
           <Button onClick={handleDownload}>Download {title}</Button>
-          <Button variant="outline" onClick={handleSaveToGallery}>Save to Gallery</Button>
+          {showSaveButton && (
+            <Button variant="outline" onClick={handleSaveToGallery}>Save to Gallery</Button>
+          )}
         </div>
       </CardContent>
     </Card>

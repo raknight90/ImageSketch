@@ -7,7 +7,7 @@ import ImageCropper from "@/components/ImageCropper";
 import ImageSketcher from "@/components/ImageSketcher";
 import ImageEdgeDetector from "@/components/ImageEdgeDetector";
 import ImageDisplayCard from "@/components/ImageDisplayCard";
-import OriginalImageDisplayCard from "@/components/OriginalImageDisplayCard"; // Import the new component
+import OriginalImageDisplayCard from "@/components/OriginalImageDisplayCard";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -42,8 +42,6 @@ const Index = () => {
 
   // Determine the source image for the next step in the pipeline
   const imageForSketcher = croppedImage || originalImage;
-  // The ImageEdgeDetector will now always use the originalImage
-  // const imageForEdgeDetector = sketchedImage || croppedImage || originalImage; // Old source
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 space-y-8">
@@ -66,7 +64,7 @@ const Index = () => {
           <ImageSketcher imageUrl={imageForSketcher} onSketch={handleSketch} />
         )}
 
-        {originalImage && ( // Render Edge Detector if original image is available
+        {originalImage && (
           <ImageEdgeDetector imageUrl={originalImage} onEdgeDetect={handleEdgeDetect} />
         )}
       </div>
@@ -77,7 +75,7 @@ const Index = () => {
           <h2 className="text-3xl font-bold text-center">Your Images</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl">
             {originalImage && (
-              <OriginalImageDisplayCard // Using the new component here
+              <OriginalImageDisplayCard
                 title="Original Image"
                 imageUrl={originalImage}
               />
@@ -87,6 +85,7 @@ const Index = () => {
                 title="Cropped Image"
                 imageUrl={croppedImage}
                 filename="cropped-image.png"
+                showSaveButton={false} {/* Hide save button for cropped image */}
               />
             )}
             {sketchedImage && (
