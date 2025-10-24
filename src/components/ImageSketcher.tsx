@@ -19,8 +19,8 @@ const ImageSketcher: React.FC<ImageSketcherProps> = ({ imageUrl, onSketch }) => 
   const [baseImageData, setBaseImageData] = useState<ImageData | null>(null); // Store base image data
   const [currentLoadedImageUrl, setCurrentLoadedImageUrl] = useState<string | null>(null); // Tracks the URL that baseImageData corresponds to
 
-  // Function to apply sketch effect on baseImageData
-  const applySketchEffect = useCallback(() => {
+  // Function to apply tonal value effect on baseImageData
+  const applyTonalValueEffect = useCallback(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx || !baseImageData) {
@@ -69,18 +69,15 @@ const ImageSketcher: React.FC<ImageSketcherProps> = ({ imageUrl, onSketch }) => 
       // Grayscale conversion (luminosity method)
       const gray = 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
-      // Apply a simple threshold to create a sketch-like effect
-      const threshold = 150; 
-      const sketchColor = gray > threshold ? 255 : 0;
-
-      pixels[i] = sketchColor;     // Red
-      pixels[i + 1] = sketchColor; // Green
-      pixels[i + 2] = sketchColor; // Blue
+      // Assign grayscale value to R, G, B channels for tonal effect
+      pixels[i] = gray;     // Red
+      pixels[i + 1] = gray; // Green
+      pixels[i + 2] = gray; // Blue
       // Alpha remains unchanged
     }
 
     ctx.putImageData(imageData, 0, 0); // Draw processed data to main canvas
-    onSketch(canvas.toDataURL("image/png")); // Emit the sketched image
+    onSketch(canvas.toDataURL("image/png")); // Emit the processed image
   }, [brightness, contrast, baseImageData, onSketch]);
 
   // Effect 1: Load image and store baseImageData
@@ -116,8 +113,6 @@ const ImageSketcher: React.FC<ImageSketcherProps> = ({ imageUrl, onSketch }) => 
       const handleImageLoad = () => {
         canvas.width = currentImage.naturalWidth;
         canvas.height = currentImage.naturalHeight;
-        // Do NOT clear canvas here. Let Effect 2 handle drawing.
-        // If baseImageData is null, Effect 2 will not draw, preserving previous state.
         
         // Store the original image data from an offscreen canvas to avoid flicker
         const offscreenCanvas = document.createElement('canvas');
@@ -138,7 +133,7 @@ const ImageSketcher: React.FC<ImageSketcherProps> = ({ imageUrl, onSketch }) => 
       };
 
       const handleImageError = () => {
-        console.error("Failed to load image for sketching.");
+        console.error("Failed to load image for tonal values.");
         setBaseImageData(null);
         setCurrentLoadedImageUrl(null);
         onSketch("");
@@ -155,15 +150,12 @@ const ImageSketcher: React.FC<ImageSketcherProps> = ({ imageUrl, onSketch }) => 
     }
   }, [imageUrl, onSketch, currentLoadedImageUrl]); // Depend on currentLoadedImageUrl
 
-  // Effect 2: Debounce applying sketch effect when sliders change or base image is ready
+  // Effect 2: Debounce applying tonal value effect when sliders change or base image is ready
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
 
     if (!baseImageData || !ctx || !canvas) {
-      // If no base image data, do NOT clear the canvas.
-      // This preserves the previous state during loading of a new image.
-      // Only clear if imageUrl is explicitly empty (handled in Effect 1).
       onSketch("");
       return;
     }
@@ -173,18 +165,18 @@ const ImageSketcher: React.FC<ImageSketcherProps> = ({ imageUrl, onSketch }) => 
     canvas.height = baseImageData.height;
 
     const handler = setTimeout(() => {
-      applySketchEffect();
+      applyTonalValueEffect();
     }, 100); // Debounce for 100ms
 
     return () => {
       clearTimeout(handler);
     };
-  }, [brightness, contrast, baseImageData, applySketchEffect, onSketch]);
+  }, [brightness, contrast, baseImageData, applyTonalValueEffect, onSketch]);
 
   const handleReset = () => {
     setBrightness(0);
     setContrast(0);
-    // applySketchEffect will be called via Effect 2 due to state change
+    // applyTonalValueEffect will be called via Effect 2 due to state change
   };
 
   if (!imageUrl) {
@@ -230,7 +222,7 @@ const ImageSketcher: React.FC<ImageSketcherProps> = ({ imageUrl, onSketch }) => 
           <canvas ref={canvasRef} className="w-full h-auto" />
         </div>
         <Button onClick={handleReset} variant="outline">
-          Reset Sketch Adjustments
+          Reset Tonal Adjustments
         </Button>
       </CardContent>
     </Card>
