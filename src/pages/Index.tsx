@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
 import ImageUpload from "@/components/ImageUpload";
 import ImageCropper from "@/components/ImageCropper";
 import ImageSketcher from "@/components/ImageSketcher";
@@ -10,7 +9,6 @@ import ImageDisplayCard from "@/components/ImageDisplayCard";
 import OriginalImageDisplayCard from "@/components/OriginalImageDisplayCard";
 import { MadeWithDyad } from "@/components/made-with-dyad";
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
 
 const Index: React.FC = () => {
   const [originalImage, setOriginalImage] = useState<string | null>(null);
@@ -48,9 +46,7 @@ const Index: React.FC = () => {
         <h1 className="text-4xl font-bold text-center flex-grow">Photo Sketcher App</h1>
       </div>
 
-      <Button asChild className="mb-4">
-        <Link to="/gallery">View Saved Images</Link>
-      </Button>
+      {/* Removed "View Saved Images" button */}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-6xl">
         <ImageUpload onImageSelect={handleImageSelect} />
@@ -84,7 +80,7 @@ const Index: React.FC = () => {
                 title="Cropped Image"
                 imageUrl={croppedImage}
                 filename="cropped-image.png"
-                showSaveButton={false}
+                // showSaveButton prop is no longer needed as save functionality is removed
               />
             )}
             {sketchedImage && (

@@ -3,18 +3,14 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useImageGallery } from "@/hooks/use-image-gallery";
 
 interface ImageDisplayCardProps {
   title: string;
   imageUrl: string;
   filename: string;
-  showSaveButton?: boolean; // New prop
 }
 
-const ImageDisplayCard: React.FC<ImageDisplayCardProps> = ({ title, imageUrl, filename, showSaveButton = true }) => {
-  const { saveImage } = useImageGallery();
-
+const ImageDisplayCard: React.FC<ImageDisplayCardProps> = ({ title, imageUrl, filename }) => {
   const handleDownload = () => {
     const link = document.createElement("a");
     link.href = imageUrl;
@@ -22,12 +18,6 @@ const ImageDisplayCard: React.FC<ImageDisplayCardProps> = ({ title, imageUrl, fi
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-
-  const handleSaveToGallery = () => {
-    console.log("ImageDisplayCard: Save to Gallery button clicked for:", title);
-    console.log("ImageDisplayCard: imageUrl length:", imageUrl ? imageUrl.length : 0);
-    saveImage(title, imageUrl);
   };
 
   if (!imageUrl) {
@@ -43,9 +33,7 @@ const ImageDisplayCard: React.FC<ImageDisplayCardProps> = ({ title, imageUrl, fi
         <img src={imageUrl} alt={title} className="max-w-full h-auto rounded-md shadow-md" />
         <div className="flex flex-col space-y-2">
           <Button onClick={handleDownload}>Download {title}</Button>
-          {showSaveButton && (
-            <Button variant="outline" onClick={handleSaveToGallery}>Save to Gallery</Button>
-          )}
+          {/* Removed "Save to Gallery" button */}
         </div>
       </CardContent>
     </Card>
